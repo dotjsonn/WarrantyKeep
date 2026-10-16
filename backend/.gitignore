@@ -1,0 +1,52 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime directories
+node_modules/
+
+# TypeScript build output
+dist/
+build/
+*.tsbuildinfo
+
+# Environment variables (Hides DB password and Connection URIs)
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+*.local
+
+# PostgreSQL Dumps & Backups
+*.dump
+*.backup
+*.psql
+
+# Ignore SQL files except migrations
+*.sql
+!migrations/
+!migrations/*.sql
+
+# Testing
+coverage/
+
+# User uploads / static assets
+public/uploads/
+uploads/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
