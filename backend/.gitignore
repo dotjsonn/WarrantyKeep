@@ -50,3 +50,6 @@ uploads/
 *.njsproj
 *.sln
 *.sw?
+
+# Requests from REST Client
+requests 
