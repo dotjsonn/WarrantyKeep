@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import express from 'express'
+import { authRouter } from './features/auth/auth.routes.js'
 
 const app = express()
 
@@ -10,5 +11,7 @@ app.get('/api/health', (_req, res) => {
     status: 'Okay'
   })
 })
+
+app.use('/api/auth', authRouter)
 
 export { app }
