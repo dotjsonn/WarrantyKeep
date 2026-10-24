@@ -52,7 +52,7 @@ const loginUser = async ({ email, password }: LoginInput): Promise <LoginReturn 
     email: user.email
   }
 
-  const token = jwt.sign(userForToken, process.env.JWT_SECRET!, { expiresIn: 60 * 60 })
+  const token = jwt.sign(userForToken, process.env.JWT_SECRET!, { expiresIn: '30m' })
 
   return {
     token,
