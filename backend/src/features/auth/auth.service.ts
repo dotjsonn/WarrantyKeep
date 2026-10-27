@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs"
 import jwt from 'jsonwebtoken'
 import { pool } from "../../db/postgres.js"
+import { securityConfig } from '../../config/security.js'
 
 type LoginInput = {
   email: string,
@@ -28,31 +29,28 @@ type RegisterReturn = {
   role: string
 }
 
-
+const dummyPasswordHash = '$2b$12$I8Z23H/8axKcXEklSHf5COCrUt56oUgbXiyn9wdShd8IFJgUCAt1G'
 
 const loginUser = async ({ email, password }: LoginInput): Promise <LoginReturn | null> => {
   const query = await pool.query(
     `SELECT user_id, name, email, password_hash, role FROM users WHERE email = $1`,
     [email]
   )
-  if (query.rowCount === 0) {
-    return null
-  }
-
   const user = query.rows[0]
 
-  const passwordCorrect = await bcrypt.compare(password, user.password_hash)
+  const passwordCorrect = await bcrypt.compare(password, user?.password_hash ?? dummyPasswordHash)
 
-  if (!passwordCorrect) {
+  if (!user || !passwordCorrect) {
     return null
   }
 
-  const userForToken = {
-    id: user.user_id,
-    email: user.email
-  }
-
-  const token = jwt.sign(userForToken, process.env.JWT_SECRET!, { expiresIn: '30m' })
+  const token = jwt.sign({}, securityConfig.jwtSecret, {
+    algorithm: securityConfig.jwtAlgorithm,
+    expiresIn: securityConfig.jwtLifetimeSeconds,
+    issuer: securityConfig.jwtIssuer,
+    audience: securityConfig.jwtAudience,
+    subject: String(user.user_id)
+  })
 
   return {
     token,
@@ -64,7 +62,7 @@ const loginUser = async ({ email, password }: LoginInput): Promise <LoginReturn 
 }
 
 const registerUser = async ({name, email, password}: RegisterInput): Promise <RegisterReturn> => {
-  const password_hash = await bcrypt.hash(password, 10)
+  const password_hash = await bcrypt.hash(password, 12)
     const result = await pool.query(`
       INSERT INTO users (name, email, password_hash, role)
       VALUES ($1, $2, $3, 'user')

@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { loginUser, registerUser } from "./auth.service.js";
-import { emailPattern } from '../../utils/validationPatterns.js'
+import { controlCharactersPattern, emailPattern } from '../../utils/validationPatterns.js'
+import { logServerError } from '../../utils/logger.js'
 
 
 const login = async (req: Request, res: Response) => {
@@ -24,6 +25,10 @@ const login = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Please enter a valid email address with 254 characters or fewer.' })
   }
 
+  if (Buffer.byteLength(password, 'utf8') > 72) {
+    return res.status(400).json({ error: 'The password must be 72 UTF-8 bytes or fewer.' })
+  }
+
   let user 
   try{
     user = await loginUser({
@@ -36,7 +41,7 @@ const login = async (req: Request, res: Response) => {
 
     res.status(200).json(user)
   } catch (error: unknown) {
-    console.error('Login Failed', error)
+    logServerError('Login failed', error)
     res.status(500).json({ error: 'Unable to log in right now. Please try again later.' })
   }
 }
@@ -63,8 +68,16 @@ const register = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Your name must be 255 characters or fewer.' })
   }
 
+  if (controlCharactersPattern.test(name)) {
+    return res.status(400).json({ error: 'Your name contains unsupported control characters.' })
+  }
+
   if (email.trim().length > 254 || !emailPattern.test(email.trim())) {
     return res.status(400).json({ error: 'Please enter a valid email address with 254 characters or fewer.' })
+  }
+
+  if (password.length < 12 || Buffer.byteLength(password, 'utf8') > 72) {
+    return res.status(400).json({ error: 'Your password must be at least 12 characters and at most 72 UTF-8 bytes.' })
   }
     
   try {
@@ -80,7 +93,7 @@ const register = async (req: Request, res: Response) => {
     if (typeof error === 'object' && error !== null && 'code' in error && error.code === '23505') {
       return res.status(409).json({ error: 'This email is already registered. Please log in or use a different email address.' })
     }
-    console.error('Registration Failed', error)
+    logServerError('Registration failed', error)
     return res.status(500).json({ error: 'Unable to create your account right now. Please try again later.' })
   }
 }

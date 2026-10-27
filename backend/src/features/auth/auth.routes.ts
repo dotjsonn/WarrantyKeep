@@ -13,9 +13,17 @@ const authLimiter = rateLimit({
   legacyHeaders: false
 })
 
+const registrationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  message: { error: 'Too many registration attempts. Please try again later.' },
+  standardHeaders: 'draft-8',
+  legacyHeaders: false
+})
+
 authRouter.post('/login', authLimiter, login)
 
-authRouter.post('/register', register)
+authRouter.post('/register', registrationLimiter, register)
 
 
 export {
