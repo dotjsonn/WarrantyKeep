@@ -1,78 +1,84 @@
-import { useState, type SubmitEvent } from "react"
-import LoginPage from "./features/auth/pages/LoginPage"
-import { login } from "./features/auth/services/authService"
-import type { User } from "./features/auth/types/auth.types"
+import { useState } from 'react'
+import { Navigate, Route, Routes, useNavigate } from 'react-router'
+import AppLayout from './components/AppLayout'
+import LoginPage from './features/auth/pages/LoginPage'
+import RegisterPage from './features/auth/pages/RegisterPage'
+import { clearStoredUser, getStoredUser, storeUser } from './features/auth/services/sessionStorage'
+import type { User } from './features/auth/types/auth.types'
+import DashboardPage from './features/dashboard/pages/DashboardPage'
+import UsersPage from './features/users/pages/UsersPage'
+import AddWarrantyPage from './features/warranties/pages/AddWarrantyPage'
+import WarrantyHistory from './features/warranties/pages/WarrantyHistory'
+import { setToken } from './features/warranties/services/warrantyService'
+
+const initialUser = getStoredUser()
+setToken(initialUser?.token ?? null)
 
 const App = () => {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [user, setUser] = useState<User | null>(() => {
-  const loggedUser = window.localStorage.getItem('loggedUser');
-    if (loggedUser) {
-      return JSON.parse(loggedUser)
-    }
-    return null
-  })
-  const [message, setMessage] = useState<string | null>(null)
+  const [user, setUser] = useState<User | null>(initialUser)
+  const navigate = useNavigate()
 
-  const handleLogin = async (event: SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    try {
-      const user: User = await login({ email, password })
-      window.localStorage.setItem('loggedUser',JSON.stringify(user))
-      setUser(user)
-      setEmail('')
-      setPassword('')
-      setMessage(`Welcome ${user.name}`)
-      setTimeout(() => {
-        setMessage(null)
-      }, 5000);
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error)
-      setMessage(message)
-      setTimeout(() => {
-        setMessage(null)
-      }, 5000);
-    }
+  const handleLogin = (loggedUser: User) => {
+    storeUser(loggedUser)
+    setToken(loggedUser.token)
+    setUser(loggedUser)
+    navigate('/dashboard', { replace: true })
   }
 
   const handleLogout = () => {
-    window.localStorage.removeItem('loggedUser')
+    clearStoredUser()
+    setToken(null)
     setUser(null)
+    navigate('/login', { replace: true })
+  }
+
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    )
   }
 
   return (
-    <div>
-      {user && (
-        <div>
-          <h1 className="font-bold text-2xl">WarrantyKeep</h1>
-          <h2>Hello {user.name}</h2>
-          <div>
-            {message}
-          </div>
-          <button className="border-2 px-4 py-1 bg-gray-900 text-white"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
-        </div>
-      )}
+    <Routes>
+      <Route element={<AppLayout key={user.user_id} user={user} onLogout={handleLogout} />}>
+        <Route path="/dashboard" element={<DashboardPage user={user} />} />
+        <Route path="/add-warranty" element={<AddWarrantyPage />} />
 
-      {!user && (
-        <div>
-          <LoginPage email={email} password={password} 
-            handleEmail={({target}) => setEmail(target.value)}
-            handlePassword={({target}) => setPassword(target.value)}
-            handleSubmit={handleLogin}
+        {user.role === 'admin' ? (
+          <>
+            <Route
+              path="/users-warranty-history"
+              element={
+                <WarrantyHistory
+                  key="others"
+                  user={user}
+                  scope="others"
+                  title="Users Warranty History"
+                />
+              }
+            />
+            <Route
+              path="/admin-history"
+              element={
+                <WarrantyHistory key="own" user={user} scope="own" title="Admin History" />
+              }
+            />
+            <Route path="/users" element={<UsersPage token={user.token} />} />
+          </>
+        ) : (
+          <Route
+            path="/warranty-history"
+            element={<WarrantyHistory user={user} scope="own" title="Warranty History" />}
           />
-          <div>
-            {message}
-          </div>
-        </div>
-      )}
+        )}
 
-
-    </div>
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Route>
+    </Routes>
   )
 }
 

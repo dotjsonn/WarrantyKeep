@@ -1,29 +1,31 @@
-import type { LoginRequest, User } from "../types/auth.types";
+import type { LoginRequest, RegisterRequest, User } from '../types/auth.types'
+import { apiRequest } from '../../../utils/apiRequest'
 
 const baseUrl = '/api/auth'
 
 const login = async (credentials: LoginRequest): Promise<User> => {
-  try {
-    const response = await fetch(`${baseUrl}/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(credentials)
-    })
+  return apiRequest<User>(`${baseUrl}/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(credentials)
+  }, 'Unable to log in right now. Please try again.', {
+    401: 'Incorrect email or password. Please try again.'
+  })
+}
 
-    if (!response.ok) {
-      throw new Error(`Error! Status ${response.status}`)
-    }
-
-    const data = await response.json()
-    console.log('Success')
-    return data
-  } catch (error) {
-    throw new Error('Error logging in', { cause: error })
-  }
+const register = async (credentials: RegisterRequest): Promise<void> => {
+  await apiRequest(`${baseUrl}/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(credentials)
+  }, 'Unable to create your account right now. Please try again.')
 }
 
 export {
-  login
+  login,
+  register
 }
