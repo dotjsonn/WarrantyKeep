@@ -1,7 +1,9 @@
 import type { Request, Response } from 'express'
 import { getWarranties, createWarranty, updateWarranty, removeWarranty } from './warranties.service.js'
 import { validateWarrantyInput } from './warranties.validation.js'
-import { positiveIdPattern } from '../../utils/validationPatterns.js'
+import { isValidId } from '../../utils/validationPatterns.js'
+import { getPagination, getQueryString } from '../../utils/pagination.js'
+import { logServerError } from '../../utils/logger.js'
 
 const get = async (req: Request, res: Response) => {
   const user = req.user
@@ -11,13 +13,24 @@ const get = async (req: Request, res: Response) => {
   }
 
   try {
+    const pagination = getPagination(req)
+    const requestedScope = getQueryString(req, 'scope')
+    const requestedStatus = getQueryString(req, 'status')
+    const scope = ['all', 'own', 'others'].includes(requestedScope) ? requestedScope : 'all'
+    const status = ['active', 'expired'].includes(requestedStatus) ? requestedStatus : 'all'
+    const search = getQueryString(req, 'search').slice(0, 100)
+
     const warranty = await getWarranties({
       role: user.role,
-      id: user.user_id
+      id: user.user_id,
+      scope,
+      status,
+      search,
+      ...pagination
     })
     res.status(200).json(warranty)
   }catch (error: unknown) {
-    console.error('Warranty lookup failed', error)
+    logServerError('Warranty lookup failed', error)
     return res.status(500).json({ error: 'Unable to load warranties right now. Please try again later.' })
   }
 }
@@ -50,7 +63,7 @@ const create = async (req: Request, res: Response) => {
 
     return res.status(201).json(warranty)
   } catch (error: unknown) {
-    console.error('Warranty creation failed', error)
+    logServerError('Warranty creation failed', error)
     return res.status(500).json({ error: 'Unable to create the warranty right now. Please try again later.' })
   }
 }
@@ -69,7 +82,7 @@ const update = async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'Please log in to continue.' })
   }
   const warranty_id = req.params.id
-  if (typeof warranty_id !== 'string' || !positiveIdPattern.test(warranty_id)) {
+  if (!isValidId(warranty_id)) {
     return res.status(400).json({ error: 'Please provide a valid warranty ID.' })
   }
 
@@ -89,7 +102,7 @@ const update = async (req: Request, res: Response) => {
 
     return res.status(200).json(warranty)
   } catch (error: unknown) {
-    console.error('Warranty update failed', error)
+    logServerError('Warranty update failed', error)
     return res.status(500).json({ error: 'Unable to update the warranty right now. Please try again later.' })
   }
 }
@@ -101,18 +114,22 @@ const remove = async (req: Request, res: Response) => {
     return res.status(401).json({ error: 'Please log in to continue.' })
   }
   const warranty_id = req.params.id
-  if (typeof warranty_id !== 'string' || !positiveIdPattern.test(warranty_id)) {
+  if (!isValidId(warranty_id)) {
     return res.status(400).json({ error: 'Please provide a valid warranty ID.' })
   }
 
   try {
-    const removed = await removeWarranty(warranty_id)
+    const removed = await removeWarranty({
+      warranty_id,
+      user_id: user.user_id,
+      role: user.role
+    })
     if (!removed) {
       return res.status(404).json({ error: 'This warranty could not be found or has already been deleted.' })
     }
     return res.status(204).end()
   } catch (error: unknown) {
-    console.error('Warranty Delete failed', error)
+    logServerError('Warranty deletion failed', error)
     return res.status(500).json({ error: 'Unable to delete the warranty right now. Please try again later.' })
   }
 }
