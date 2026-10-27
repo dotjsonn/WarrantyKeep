@@ -8,8 +8,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "typeCheck": "tsc --noEmit",
-    "db:seed:users": "tsx src/db/seedInitialUsers.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "db:migrate": "node-pg-migrate up",
+    "db:seed:users": "tsx src/db/seedInitialUsers.ts"
   },
   "keywords": [],
   "author": "",
