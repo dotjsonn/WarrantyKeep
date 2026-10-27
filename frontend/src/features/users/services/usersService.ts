@@ -1,10 +1,16 @@
-import type { ManagedUser } from '../types/users.types'
+import type { UsersPageResult } from '../types/users.types'
 import { apiRequest } from '../../../utils/apiRequest'
 
 const baseUrl = '/api/list-users'
 
-const getUsers = async (token: string): Promise<ManagedUser[]> => {
-  return apiRequest<ManagedUser[]>(baseUrl, {
+const getUsers = async (
+  token: string,
+  { page = 1, limit = 8, search = '' }: { page?: number; limit?: number; search?: string } = {}
+): Promise<UsersPageResult> => {
+  const parameters = new URLSearchParams({ page: String(page), limit: String(limit) })
+  if (search) parameters.set('search', search)
+
+  return apiRequest<UsersPageResult>(`${baseUrl}?${parameters.toString()}`, {
     headers: { Authorization: `Bearer ${token}` }
   }, 'Unable to load users right now. Please try again.')
 }

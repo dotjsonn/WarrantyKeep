@@ -92,22 +92,25 @@ const App = () => {
                   key="others"
                   user={user}
                   scope="others"
-                  title="Users Warranty History"
+                  title="User warranty history"
                 />
               }
             />
             <Route
               path="/admin-history"
               element={
-                <WarrantyHistory key="own" user={user} scope="own" title="Admin History" />
+                <WarrantyHistory key="own" user={user} scope="own" title="My warranty history" />
               }
             />
-            <Route path="/users" element={<UsersPage token={user.token} />} />
+            <Route
+              path="/users"
+              element={<UsersPage token={user.token} currentUserId={user.user_id} />}
+            />
           </>
         ) : (
           <Route
             path="/warranty-history"
-            element={<WarrantyHistory user={user} scope="own" title="Warranty History" />}
+            element={<WarrantyHistory user={user} scope="own" title="Warranty history" />}
           />
         )}
 

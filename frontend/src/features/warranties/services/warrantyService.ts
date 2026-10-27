@@ -1,4 +1,4 @@
-import type { Warranty, WarrantyRequest } from '../types/warranties.types'
+import type { WarrantyPage, WarrantyQuery, WarrantyRequest } from '../types/warranties.types'
 import { apiRequest } from '../../../utils/apiRequest'
 
 const baseUrl = '/api/warranties'
@@ -17,10 +17,18 @@ const getAuthorizationHeaders = (): { Authorization: string } => {
   return { Authorization: token }
 }
 
-const getWarranties = async (): Promise<Warranty[]> => {
+const getWarranties = async (query: WarrantyQuery = {}): Promise<WarrantyPage> => {
   const headers = getAuthorizationHeaders()
+  const parameters = new URLSearchParams()
 
-  return apiRequest<Warranty[]>(baseUrl, {
+  if (query.page) parameters.set('page', String(query.page))
+  if (query.limit) parameters.set('limit', String(query.limit))
+  if (query.scope) parameters.set('scope', query.scope)
+  if (query.status) parameters.set('status', query.status)
+  if (query.search) parameters.set('search', query.search)
+  const url = parameters.size ? `${baseUrl}?${parameters.toString()}` : baseUrl
+
+  return apiRequest<WarrantyPage>(url, {
     method: 'GET',
     headers
   }, 'Unable to load warranties right now. Please try again.')
