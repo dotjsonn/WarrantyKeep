@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router'
 import { getErrorMessage } from '../../../utils/errors'
 import { login } from '../services/authService'
 import type { User } from '../types/auth.types'
+import Brand from '../../../components/Brand'
 
 type LoginPageProps = {
   onLogin: (user: User) => void;
@@ -10,6 +11,7 @@ type LoginPageProps = {
 
 type RegistrationState = {
   registrationComplete?: boolean;
+  sessionExpired?: boolean;
   email?: string;
 }
 
@@ -38,20 +40,26 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-sm rounded border p-6">
-        <h1 className="text-2xl font-bold">WarrantyKeep</h1>
-        <h2 className="mt-2 text-xl">Login</h2>
+    <div className="grid min-h-dvh min-w-0 place-items-center bg-[#4056a1] px-4 py-6 sm:px-5 sm:py-8">
+      <div className="min-w-0 w-full max-w-[440px] wrap-anywhere rounded-[12px_12px_12px_42px] border-[1.5px] border-line bg-surface p-5 shadow-[0_24px_70px_rgb(29_37_82_/_20%)] sm:p-[34px]">
+        <Brand />
+        <div className="mt-[34px] mb-[22px]">
+          <h1 className="m-0 font-heading text-[clamp(28px,7vw,36px)] leading-tight font-extrabold tracking-[-0.035em]">Welcome back</h1>
+          <p className="mt-2 mb-0 text-muted">Sign in to keep every warranty within reach.</p>
+        </div>
         {registration?.registrationComplete && (
-          <p role="status" className="mt-4 text-green-700">Registration complete. Please log in.</p>
+          <p role="status" className="mb-[18px] rounded-[5px_9px_9px_5px] border-[1.5px] border-line border-l-[5px] border-l-brand bg-surface px-4 py-3 font-medium">Registration complete. Please log in.</p>
         )}
-        {message && <p role="alert" className="mt-4 text-red-600">{message}</p>}
+        {registration?.sessionExpired && (
+          <p role="status" className="mb-[18px] rounded-[5px_9px_9px_5px] border-[1.5px] border-line border-l-[5px] border-l-gold bg-surface px-4 py-3 font-medium">Your session expired. Please sign in again.</p>
+        )}
+        {message && <p role="alert" className="mb-[18px] rounded-[5px_9px_9px_5px] border-[1.5px] border-line border-l-[5px] border-l-alert bg-surface px-4 py-3 font-medium text-expired-text">{message}</p>}
 
-        <form className="mt-4 space-y-4" onSubmit={handleSubmit} aria-busy={submitting}>
-          <label className="block">
-            Email
+        <form className="grid gap-[17px]" onSubmit={handleSubmit} aria-busy={submitting}>
+          <label className="flex flex-col gap-2 font-semibold">
+            <span className="font-semibold">Email</span>
             <input
-              className="mt-1 block w-full rounded border p-2"
+              className="h-[54px] min-w-0 w-full rounded-lg border-[1.5px] border-line bg-page px-4 font-normal focus:border-brand focus:outline-none focus:shadow-[0_0_0_3px_rgb(64_86_161_/_14%)]"
               type="email"
               name="email"
               autoComplete="username"
@@ -61,28 +69,29 @@ const LoginPage = ({ onLogin }: LoginPageProps) => {
               maxLength={254}
             />
           </label>
-          <label className="block">
-            Password
+          <label className="flex flex-col gap-2 font-semibold">
+            <span className="font-semibold">Password</span>
             <input
-              className="mt-1 block w-full rounded border p-2"
+              className="h-[54px] min-w-0 w-full rounded-lg border-[1.5px] border-line bg-page px-4 font-normal focus:border-brand focus:outline-none focus:shadow-[0_0_0_3px_rgb(64_86_161_/_14%)]"
               type="password"
               name="password"
               autoComplete="current-password"
               value={password}
               onChange={({ target }) => setPassword(target.value)}
               required
+              maxLength={72}
             />
           </label>
           <button
-            className="w-full rounded border bg-gray-900 px-4 py-2 text-white disabled:opacity-50"
+            className="mt-1.5 inline-flex min-h-[46px] w-full cursor-pointer items-center justify-center rounded-lg border-[1.5px] border-transparent bg-brand px-5 py-2.5 font-semibold text-white hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-55"
             type="submit"
             disabled={submitting}
           >
-            {submitting ? 'Logging in...' : 'Login'}
+            {submitting ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
-        <p className="mt-4 text-center">
-          Don't have an account? <Link className="underline" to="/register">Register</Link>
+        <p className="mt-[22px] mb-0 text-center text-muted">
+          Don&apos;t have an account? <Link className="font-semibold" to="/register">Create one</Link>
         </p>
       </div>
     </div>
