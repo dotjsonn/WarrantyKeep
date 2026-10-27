@@ -1,5 +1,23 @@
 type ErrorMessages = Partial<Record<number, string>>
 
+export const unauthorizedEvent = 'warrantykeep:unauthorized'
+
+const configuredApiBaseUrl = import.meta.env?.VITE_API_BASE_URL?.trim().replace(/\/+$/, '') ?? ''
+
+if (configuredApiBaseUrl) {
+  const parsedApiUrl = new URL(configuredApiBaseUrl)
+  if (!['http:', 'https:'].includes(parsedApiUrl.protocol) || parsedApiUrl.origin !== configuredApiBaseUrl) {
+    throw new Error('VITE_API_BASE_URL must be an origin without a path.')
+  }
+  if (import.meta.env?.PROD && parsedApiUrl.protocol !== 'https:') {
+    throw new Error('VITE_API_BASE_URL must use HTTPS in production.')
+  }
+}
+
+const getApiUrl = (url: string) => configuredApiBaseUrl && url.startsWith('/api')
+  ? `${configuredApiBaseUrl}${url}`
+  : url
+
 const getResponseError = async (
   response: Response,
   fallbackMessage: string,
@@ -39,12 +57,16 @@ export const apiRequest = async <T>(
   let response: Response
 
   try {
-    response = await fetch(url, options)
+    response = await fetch(getApiUrl(url), { ...options, credentials: 'omit', cache: 'no-store' })
   } catch {
     throw new Error('Unable to connect to the server. Please check your connection and try again.')
   }
 
   if (!response.ok) {
+    if (response.status === 401 && new Headers(options.headers).has('Authorization')) {
+      const token = new Headers(options.headers).get('Authorization')?.replace(/^Bearer /i, '')
+      window.dispatchEvent(new CustomEvent(unauthorizedEvent, { detail: { token } }))
+    }
     throw new Error(await getResponseError(response, fallbackMessage, errorMessages))
   }
 
