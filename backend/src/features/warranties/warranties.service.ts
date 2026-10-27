@@ -80,10 +80,11 @@ const updateWarranty = async ({warranty_id, user_id, name, purchase_date, warran
 }
 
 const removeWarranty = async (warranty_id: string) => {
-  await pool.query(`
+  const result = await pool.query(`
     DELETE FROM warranties
     WHERE warranty_id = $1
   `, [warranty_id])
+  return result.rowCount !== 0
 }
 
 export {

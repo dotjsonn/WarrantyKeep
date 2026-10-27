@@ -1,6 +1,7 @@
 import type { Request, Response } from "express"
 
 import { getUsers, removeUser } from "./users.service.js"
+import { positiveIdPattern } from '../../utils/validationPatterns.js'
 
 const get = async(_req: Request, res: Response) => {
   try {
@@ -8,24 +9,24 @@ const get = async(_req: Request, res: Response) => {
     res.status(200).json(users)
   } catch(error: unknown) {
     console.error('Users lookup failed', error)
-    return res.status(500).json({ error: 'Users lookup failed' })
+    return res.status(500).json({ error: 'Unable to load users right now. Please try again later.' })
   }
 }
 
 const remove  = async(req: Request, res: Response) => {
   try {
     const id = req.params.id
-    if (typeof id !== 'string' || !/^[1-9]\d*$/.test(id)) {
-      return res.status(400).json({ error: 'Missing or invalid user_id'})
+    if (typeof id !== 'string' || !positiveIdPattern.test(id)) {
+      return res.status(400).json({ error: 'Please provide a valid user ID.' })
     }
     const removed = await removeUser(id)
     if (!removed) {
-      return res.status(404).json({ error: 'User not found' })
+      return res.status(404).json({ error: 'This user could not be found or has already been deleted.' })
     }
     res.status(204).end()
   } catch(error: unknown) {
     console.error('User deletion failed', error)
-    return res.status(500).json({ error: 'User deletion failed' })
+    return res.status(500).json({ error: 'Unable to delete the user right now. Please try again later.' })
   }
 }
 
