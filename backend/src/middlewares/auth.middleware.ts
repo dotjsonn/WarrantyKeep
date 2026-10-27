@@ -9,7 +9,7 @@ const checkToken = async (req: Request, res: Response, next: NextFunction) => {
     token = authorization.replace('Bearer ', '')
   } 
   if (!token) {
-    return res.status(401).json({ error: "Access denied. Token missing." });
+    return res.status(401).json({ error: 'Please log in to continue.' })
   }
 
   const secret = process.env.JWT_SECRET
@@ -23,12 +23,11 @@ const checkToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
     decodedToken = jwt.verify(token, secret)
   } catch {
-    return res.status(401).json({ error: 'Invalid or expired token' })
+    return res.status(401).json({ error: 'Your session is invalid or has expired. Please log in again.' })
   }
-  console.log(decodedToken)
 
   if (typeof decodedToken === 'string' || !['string', 'number'].includes(typeof decodedToken.id)) {
-    return res.status(401).json({ error: 'Invalid token payload' })
+    return res.status(401).json({ error: 'Your session is invalid. Please log in again.' })
   }
 
   try {
@@ -40,7 +39,7 @@ const checkToken = async (req: Request, res: Response, next: NextFunction) => {
     )
 
     if (result.rowCount === 0) {
-      return res.status(401).json({ error: 'User not found' })
+      return res.status(401).json({ error: 'Your account is no longer available. Please log in again.' })
     }
 
     req.user = result.rows[0]
