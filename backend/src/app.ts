@@ -40,6 +40,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRouter)
 app.use('/api/warranties', warrantyRouter)
 app.use('/api/list-users', usersRouter)
+app.use('/api/dashboard', dashboardRouter)
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'The requested resource could not be found.' })
