@@ -1,13 +1,45 @@
 import { pool } from "../../db/postgres.js";
 
-const getUsers = async () => {
-  const result = await pool.query(`
-    SELECT user_id, name, email
-    FROM users
-    WHERE role = 'user'
-    ORDER BY user_id
-  `)
-  return result.rows
+type GetUsersInput = {
+  page: number;
+  limit: number;
+  offset: number;
+  search: string;
+}
+
+const getUsers = async ({ page, limit, offset, search }: GetUsersInput) => {
+  const [itemsResult, countResult] = await Promise.all([
+    pool.query(`
+      SELECT
+        u.user_id,
+        u.name,
+        u.email,
+        u.role,
+        COUNT(w.warranty_id)::int AS warranty_count
+      FROM users u
+      LEFT JOIN warranties w ON w.user_id = u.user_id
+      WHERE $1 = '' OR u.name ILIKE '%' || $1 || '%' OR u.email ILIKE '%' || $1 || '%'
+      GROUP BY u.user_id, u.name, u.email, u.role
+      ORDER BY CASE WHEN u.role = 'admin' THEN 0 ELSE 1 END, u.name, u.user_id
+      LIMIT $2 OFFSET $3
+    `, [search, limit, offset]),
+    pool.query(`
+      SELECT COUNT(*)::int AS total
+      FROM users
+      WHERE $1 = '' OR name ILIKE '%' || $1 || '%' OR email ILIKE '%' || $1 || '%'
+    `, [search])
+  ])
+
+  const total = Number(countResult.rows[0].total)
+  return {
+    items: itemsResult.rows,
+    pagination: {
+      page,
+      limit,
+      total,
+      total_pages: Math.ceil(total / limit)
+    }
+  }
 }
 
 const removeUser = async (id: string) => {

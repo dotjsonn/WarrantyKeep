@@ -1,15 +1,16 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router'
 import AppLayout from './components/AppLayout'
 import LoginPage from './features/auth/pages/LoginPage'
 import RegisterPage from './features/auth/pages/RegisterPage'
-import { clearStoredUser, getStoredUser, storeUser } from './features/auth/services/sessionStorage'
+import { clearStoredUser, getStoredUser, getTokenExpiration, storeUser } from './features/auth/services/sessionStorage'
 import type { User } from './features/auth/types/auth.types'
 import DashboardPage from './features/dashboard/pages/DashboardPage'
 import UsersPage from './features/users/pages/UsersPage'
 import AddWarrantyPage from './features/warranties/pages/AddWarrantyPage'
 import WarrantyHistory from './features/warranties/pages/WarrantyHistory'
 import { setToken } from './features/warranties/services/warrantyService'
+import { unauthorizedEvent } from './utils/apiRequest'
 
 const initialUser = getStoredUser()
 setToken(initialUser?.token ?? null)
@@ -25,12 +26,46 @@ const App = () => {
     navigate('/dashboard', { replace: true })
   }
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     clearStoredUser()
     setToken(null)
     setUser(null)
     navigate('/login', { replace: true })
-  }
+  }, [navigate])
+
+  useEffect(() => {
+    const handleUnauthorized = (event?: Event) => {
+      const rejectedToken = event instanceof CustomEvent ? event.detail?.token : undefined
+      if (rejectedToken && rejectedToken !== user?.token) return
+      clearStoredUser()
+      setToken(null)
+      setUser(null)
+      navigate('/login', { replace: true, state: { sessionExpired: true } })
+    }
+
+    window.addEventListener(unauthorizedEvent, handleUnauthorized)
+    const expiration = user ? getTokenExpiration(user.token) : null
+    const timeout = expiration
+      ? window.setTimeout(handleUnauthorized, Math.min(2_147_483_647, Math.max(0, expiration - Date.now())))
+      : undefined
+    const syncStoredSession = () => {
+      const stored = getStoredUser()
+      setToken(stored?.token ?? null)
+      setUser(stored)
+    }
+    const checkExpiration = () => {
+      if (expiration && expiration <= Date.now()) handleUnauthorized()
+    }
+    window.addEventListener('storage', syncStoredSession)
+    window.addEventListener('focus', checkExpiration)
+
+    return () => {
+      window.removeEventListener(unauthorizedEvent, handleUnauthorized)
+      window.removeEventListener('storage', syncStoredSession)
+      window.removeEventListener('focus', checkExpiration)
+      if (timeout !== undefined) window.clearTimeout(timeout)
+    }
+  }, [navigate, user])
 
   if (!user) {
     return (
@@ -57,22 +92,25 @@ const App = () => {
                   key="others"
                   user={user}
                   scope="others"
-                  title="Users Warranty History"
+                  title="User warranty history"
                 />
               }
             />
             <Route
               path="/admin-history"
               element={
-                <WarrantyHistory key="own" user={user} scope="own" title="Admin History" />
+                <WarrantyHistory key="own" user={user} scope="own" title="My warranty history" />
               }
             />
-            <Route path="/users" element={<UsersPage token={user.token} />} />
+            <Route
+              path="/users"
+              element={<UsersPage token={user.token} currentUserId={user.user_id} />}
+            />
           </>
         ) : (
           <Route
             path="/warranty-history"
-            element={<WarrantyHistory user={user} scope="own" title="Warranty History" />}
+            element={<WarrantyHistory user={user} scope="own" title="Warranty history" />}
           />
         )}
 

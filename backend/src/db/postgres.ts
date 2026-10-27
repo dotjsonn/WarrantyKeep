@@ -1,5 +1,6 @@
 import pg from 'pg'
 import 'dotenv/config'
+import { logServerError } from '../utils/logger.js'
 
 const { Pool } = pg
 
@@ -13,9 +14,7 @@ const pool = new Pool ({
   connectionString: databaseUrl
 })
 
-pool.on('error', (error) => {
-  console.error('Error Connecting to database', error)
-})
+pool.on('error', error => logServerError('Unexpected database pool error', error))
 
 const connectPostgreSQL = async () => {
   await pool.query('SELECT 1')

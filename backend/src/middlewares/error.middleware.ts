@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler } from 'express'
+import { logServerError } from '../utils/logger.js'
 
 const handleError: ErrorRequestHandler = (error: unknown, _req, res, next) => {
   if (res.headersSent) {
@@ -21,7 +22,7 @@ const handleError: ErrorRequestHandler = (error: unknown, _req, res, next) => {
     }
   }
 
-  console.error('Unexpected request error', error)
+  logServerError('Unexpected request error', error)
   res.status(500).json({ error: 'Something went wrong on the server. Please try again later.' })
 }
 

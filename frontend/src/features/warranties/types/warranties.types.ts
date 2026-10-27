@@ -24,3 +24,28 @@ export type Warranty = {
   expires_on: string;
   status: 'active' | 'expired';
 }
+
+export type PaginationMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  total_pages: number;
+}
+
+export type WarrantyPage = {
+  items: Warranty[];
+  pagination: PaginationMeta;
+  summary: {
+    all: number;
+    active: number;
+    expired: number;
+  };
+}
+
+export type WarrantyQuery = {
+  page?: number;
+  limit?: number;
+  scope?: 'all' | 'own' | 'others';
+  status?: 'all' | 'active' | 'expired';
+  search?: string;
+}

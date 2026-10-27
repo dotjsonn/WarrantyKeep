@@ -1,1 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Public+Sans:wght@400;500;600&display=swap');
 @import "tailwindcss";
+
+:root {
+  --page: #f2f0ea;
+  --surface: #fbfaf6;
+  --ink: #1d2552;
+  --muted: #5a6288;
+  --line: #c5cbe3;
+  --blue: #4056a1;
+  --link: #4056a1;
+  --gold: #d79922;
+  --cream: #efe2ba;
+  --red: #db321b;
+  --active-bg: #c5cbe3;
+  --active-text: #2b3a82;
+  --expired-bg: #fcd9d1;
+  --expired-text: #a8200b;
+  --sidebar: #4056a1;
+  --sidebar-ink: #efe2ba;
+  color-scheme: light;
+}
+
+@theme {
+  --font-heading: 'Bricolage Grotesque', 'Trebuchet MS', system-ui, sans-serif;
+  --font-body: 'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--blue);
+  --color-link: var(--link);
+  --color-gold: var(--gold);
+  --color-cream: var(--cream);
+  --color-alert: var(--red);
+  --color-active-bg: var(--active-bg);
+  --color-active-text: var(--active-text);
+  --color-expired-bg: var(--expired-bg);
+  --color-expired-text: var(--expired-text);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-ink: var(--sidebar-ink);
+}
+
+@layer base {
+  body {
+    @apply m-0 min-h-dvh min-w-0 bg-page font-body text-base leading-6 text-ink;
+  }
+
+  button, input { font: inherit; color: inherit; }
+  a { @apply text-link; }
+  input::placeholder { @apply text-muted opacity-100; }
+  :focus-visible { @apply outline-3 outline-offset-2 outline-gold; }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #141932;
+    --surface: #1d2448;
+    --ink: #f3ead0;
+    --muted: #a9b2d8;
+    --line: #36427d;
+    --blue: #5369b7;
+    --link: #aebbec;
+    --cream: #4f4220;
+    --active-bg: #33427f;
+    --active-text: #dde2f6;
+    --expired-bg: #5a2420;
+    --expired-text: #ffc4b8;
+    --sidebar: #222b5a;
+    --sidebar-ink: #efe2ba;
+    color-scheme: dark;
+  }
+}

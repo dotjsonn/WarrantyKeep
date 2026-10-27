@@ -33,9 +33,6 @@ build/
 !migrations/
 !migrations/*.sql
 
-# Testing
-coverage/
-
 # User uploads / static assets
 public/uploads/
 uploads/
@@ -52,4 +49,4 @@ uploads/
 *.sw?
 
 # Requests from REST Client
-requests 
+requests
